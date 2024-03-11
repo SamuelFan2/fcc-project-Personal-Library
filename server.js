@@ -3,6 +3,7 @@
 const express     = require('express');
 const bodyParser  = require('body-parser');
 const cors        = require('cors');
+const { MongoClient } = require('mongodb');
 require('dotenv').config();
 
 const apiRoutes         = require('./routes/api.js');
@@ -10,6 +11,8 @@ const fccTestingRoutes  = require('./routes/fcctesting.js');
 const runner            = require('./test-runner');
 
 const app = express();
+const myDB = new MongoClient(process.env.DB, { useNewUrlParser: true, useUnifiedTopology: true });
+const database = myDB.db('fcc-project-Personal-Library').collection('book');
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
@@ -28,8 +31,12 @@ app.route('/')
 fccTestingRoutes(app);
 
 //Routing for API 
-apiRoutes(app);  
+myDB.connect()
+  .then(apiRoutes(app, database))
+  .catch(err => console.log(err));
     
+
+
 //404 Not Found Middleware
 app.use(function(req, res, next) {
   res.status(404)
